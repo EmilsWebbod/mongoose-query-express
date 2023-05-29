@@ -1,9 +1,14 @@
-import { Query, QueryError, QueryModel } from '@ewb/mongoose-query';
+import {
+  getPageLinkHeader,
+  ISearchPaginate,
+  Query,
+  QueryError,
+  QueryModel,
+} from '@ewb/mongoose-query';
 import { NextFunction, Request, Response } from 'express';
 import httpStatus from 'http-status';
 import mongoose from 'mongoose';
 import { QueryExpressSub } from './QueryExpressSub.js';
-import { pageLinkHeader } from './utils.js';
 
 export interface IQueryExpressOptions {
   skipHandlerAction?:
@@ -16,7 +21,11 @@ export interface IQueryExpressOptions {
     | 'export';
 }
 
-export interface IQueryExpressHandlerOptions<T extends object> {
+export interface IQueryExpressHandlerOptions<
+  R extends Request,
+  T extends object
+> {
+  queryKey?: keyof R;
   slugKey?: keyof T & string;
   archiveKey?: keyof T;
   history?: {
@@ -33,7 +42,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
   constructor(
     private param: keyof R,
     private handler: QueryModel<T>,
-    readonly options: IQueryExpressHandlerOptions<T> = {}
+    readonly options: IQueryExpressHandlerOptions<R, T> = {}
   ) {
     this.post = this.post.bind(this);
     this.findOne = this.findOne.bind(this);
@@ -68,7 +77,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
         }
       }
       req[this.param] = (await this.handler.create(req.body)) as any;
-      await this.handler.populate(req.mongooseQuery, this.getDoc(req));
+      await this.handler.populate(this.query(req), this.getDoc(req));
       res.status(201);
       next();
     } catch (e) {
@@ -84,14 +93,14 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
       this.init(req);
       this.addRootRequest(req);
       req[this.param] = (await this.handler.findOne(
-        req.mongooseQuery as Query<T>,
+        this.query(req) as Query<T>,
         this.getFindOpts(req)
       )) as any;
       this.preHistory(req);
       this.removeRootRequest(req, this.options.slugKey);
       this.validateReq(req);
       await this.handler.populate(
-        req.mongooseQuery,
+        this.query(req),
         this.getDoc(req),
         'onFindOne'
       );
@@ -108,7 +117,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
       }
       const data = await this._search(req, res);
 
-      if (req.query.as === 'array' || req.mongooseQuery.page > 0) {
+      if (req.query.as === 'array' || this.query(req).page > 0) {
         return res.json(data.data);
       }
       return res.json(data);
@@ -131,10 +140,10 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   private async _search(req: R, res: Response) {
     this.init(req);
-    req.mongooseQuery.removeQuery('as');
+    this.query(req).removeQuery('as');
     // @ts-ignore
-    const data = await this.handler.search(req.mongooseQuery);
-    res.setHeader('Link', pageLinkHeader(req, data));
+    const data = await this.handler.search(this.query(req));
+    res.setHeader('Link', this.pageLinkHeader(req, data));
     res.setHeader('X-Total-Count', data.count);
     return data;
   }
@@ -145,9 +154,9 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
         return next();
       }
       this.init(req);
-      req.mongooseQuery.export = true;
-      const paginate = await this.handler.search(req.mongooseQuery);
-      res.setHeader('Link', pageLinkHeader(req, paginate));
+      this.query(req).export = true;
+      const paginate = await this.handler.search(this.query(req));
+      res.setHeader('Link', this.pageLinkHeader(req, paginate));
       res.setHeader('X-Total-Count', paginate.count);
 
       req.mongooseExportJson = paginate.data;
@@ -165,18 +174,14 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
       this.validateReq(req);
       this.validateBody(req);
       this.init(req);
-      const query = req.mongooseQuery as Query<T>;
+      const query = this.query(req) as Query<T>;
       req[this.param] = (await this.handler.findOneAndUpdate(
         query,
         { _id: this.getDoc(req)._id },
         { $set: req.body } as any
       )) as any;
       this.postHistory(req).then();
-      await this.handler.populate(
-        req.mongooseQuery,
-        this.getDoc(req),
-        'onPatch'
-      );
+      await this.handler.populate(this.query(req), this.getDoc(req), 'onPatch');
 
       next();
     } catch (e) {
@@ -192,7 +197,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
       this.validateReq(req);
       this.init(req);
       req[this.param] = (await this.handler.findOneAndUpdate(
-        req.mongooseQuery as Query<T>,
+        this.query(req) as Query<T>,
         { _id: this.getDoc(req)._id },
         // @ts-ignore
         { [this.options.archiveKey]: true }
@@ -246,13 +251,9 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
       const ids = this.validateIdsInBody(req);
       delete req.body.ids;
       this.handler.validateBody(req.body);
-      await this.handler.updateMany(
-        req.mongooseQuery.root || {},
-        ids,
-        req.body
-      );
-      req.mongooseQuery.addRoot({ _id: { $in: ids } });
-      req.mongooseQuery.setSkipAndLimit(0, ids.length);
+      await this.handler.updateMany(this.query(req).root || {}, ids, req.body);
+      this.query(req).addRoot({ _id: { $in: ids } });
+      this.query(req).setSkipAndLimit(0, ids.length);
       req.query.as = 'array';
       return this.search(req, res, next);
     } catch (e) {
@@ -265,7 +266,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
       try {
         const ids = this.validateIdsInBody(req);
         const deleted = await this.handler.deleteMany(
-          req.mongooseQuery.root || {},
+          this.query(req).root || {},
           ids
         );
         if (runNext) {
@@ -283,7 +284,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
       try {
         const ids = this.validateIdsInBody(req);
         // @ts-ignore
-        await this.handler.updateMany(req.mongooseQuery.root || {}, ids, {
+        await this.handler.updateMany(this.query(req).root || {}, ids, {
           [this.options.archiveKey]: true,
         });
         if (runNext) {
@@ -303,7 +304,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
       try {
         const data = fn(req);
         if (data) {
-          req.mongooseQuery.addRootNext(data);
+          this.query(req).addRootNext(data);
         }
         next();
       } catch (e) {
@@ -321,7 +322,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
       }
       const doc = this.getDoc(req);
       req.mongoosePostBody[this.param as string] = doc._id;
-      req.mongooseQuery.addRoot({
+      this.query(req).addRoot({
         [this.param]: doc._id,
       } as mongoose.FilterQuery<T>);
       next();
@@ -343,7 +344,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
   }
 
   public addRootRequest(req: R) {
-    req.mongooseQuery.addRoot(this.getRootQuery(req));
+    this.query(req).addRoot(this.getRootQuery(req));
   }
 
   public getRootQuery(req: R): mongoose.FilterQuery<T> {
@@ -366,15 +367,12 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
   }
 
   public removeRootRequest(req: R, slugKey?: string) {
-    req.mongooseQuery.deleteKeysFromRoot([
-      '_id',
-      ...(slugKey ? [slugKey] : []),
-    ]);
+    this.query(req).deleteKeysFromRoot(['_id', ...(slugKey ? [slugKey] : [])]);
   }
 
   public addToQuery(req: R, _res: Response, next: NextFunction) {
     try {
-      req.mongooseQuery.addRoot({
+      this.query(req).addRoot({
         [this.param]: this.getDoc(req)._id,
       } as mongoose.FilterQuery<T>);
       next();
@@ -431,7 +429,26 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   public init(req: R) {
     // @ts-ignore
-    req.mongooseQuery.parameter = this.param;
+    this.query(req).parameter = this.param;
+  }
+
+  public query(req: R) {
+    if (this.options.queryKey in req) {
+      return req[this.options.queryKey] as Query<T>;
+    }
+    if (!req.mongooseQuery) {
+      throw new QueryError(httpStatus.INTERNAL_SERVER_ERROR, 'Query not init', {
+        detail: `mongooseQuery missing or queryKey option missing in QueryExpress ${String(
+          this.param
+        )}`,
+      });
+    }
+    return req.mongooseQuery;
+  }
+
+  public pageLinkHeader(req: R, data: ISearchPaginate<any>) {
+    const rootUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
+    return getPageLinkHeader(rootUrl, this.query(req), data);
   }
 
   private getDoc(req: R, param = this.param) {

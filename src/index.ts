@@ -1,18 +1,7 @@
 import './declarations.js';
-import { Query, IMongooseQueryOptions } from '@ewb/mongoose-query';
-import { Request, NextFunction, Response } from 'express';
-
 export * from '@ewb/mongoose-query';
 export * from './QueryExpress.js';
 
-function queryExpress(req: Request, _res: Response, next: NextFunction) {
-  try {
-    req.mongooseQuery = new Query<Request>(req.query as IMongooseQueryOptions);
-    next();
-  } catch (e) {
-    next(e);
-  }
-}
+import { QueryExpress } from './QueryExpress.js';
 
-export default queryExpress;
-export { queryExpress };
+export default QueryExpress;

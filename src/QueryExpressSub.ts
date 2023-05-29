@@ -3,7 +3,6 @@ import { NextFunction, Request, Response } from 'express';
 import httpStatus from 'http-status';
 import mongoose from 'mongoose';
 import { QueryExpress } from './QueryExpress.js';
-import { pageLinkHeader } from './utils.js';
 
 export class QueryExpressSub<
   R extends Request,
@@ -29,14 +28,14 @@ export class QueryExpressSub<
       this.express.addRootRequest(req);
       req[this.reqKey] = (await this.handler.subCreate(
         this.param,
-        req.mongooseQuery,
+        this.express.query(req),
         req.body
       ))! as any;
       this.validateReq(req);
       this.express.postHistory(req, true).then();
       this.express.removeRootRequest(req, this.express.options.slugKey);
       await this.handler.subPopulate(
-        req.mongooseQuery,
+        this.express.query(req),
         this.getSubDoc(req),
         this.param,
         'onPost'
@@ -49,16 +48,16 @@ export class QueryExpressSub<
 
   public async search(req: R, res: Response, next: NextFunction) {
     try {
-      req.mongooseQuery.removeQuery('as');
+      this.express.query(req).removeQuery('as');
       // @ts-ignore
       const results = (await this.handler.subSearch(
         this.param,
-        req.mongooseQuery,
+        this.express.query(req),
         this.express.getRootQuery(req)
       ))!;
-      res.setHeader('Link', pageLinkHeader(req, results));
+      res.setHeader('Link', this.express.pageLinkHeader(req, results));
       res.setHeader('X-Total-Count', results.count);
-      if (req.query.as === 'array' || req.mongooseQuery.page > 0) {
+      if (req.query.as === 'array' || this.express.query(req).page > 0) {
         return res.json(results.data);
       }
       // await this.handler.subPopulate(req, results.data, this.param, 'onSearch');
@@ -73,13 +72,13 @@ export class QueryExpressSub<
       this.express.addRootRequest(req);
       req[this.reqKey] = (await this.handler.subFindOne(
         this.param,
-        req.mongooseQuery,
+        this.express.query(req),
         this.getQuery(req)
       ))! as any;
       this.validateReq(req);
       this.express.removeRootRequest(req, this.express.options.slugKey);
       await this.handler.subPopulate(
-        req.mongooseQuery,
+        this.express.query(req),
         this.getSubDoc(req),
         this.param,
         'onFindOne'
@@ -95,7 +94,7 @@ export class QueryExpressSub<
       this.express.addRootRequest(req);
       req[this.reqKey] = (await this.handler.subFindOneAndUpdate(
         this.param,
-        req.mongooseQuery,
+        this.express.query(req),
         this.getQuery(req),
         req.body
       ))! as any;
@@ -103,7 +102,7 @@ export class QueryExpressSub<
       this.express.postHistory(req, true).then();
       this.express.removeRootRequest(req, this.express.options.slugKey);
       await this.handler.subPopulate(
-        req.mongooseQuery,
+        this.express.query(req),
         this.getSubDoc(req),
         this.param,
         'onPatch'
@@ -119,7 +118,7 @@ export class QueryExpressSub<
       this.express.addRootRequest(req);
       req[this.reqKey] = (await this.handler.subDelete(
         this.param,
-        req.mongooseQuery,
+        this.express.query(req),
         this.getQuery(req)
       ))! as any;
       this.express.postHistory(req, true).then();
