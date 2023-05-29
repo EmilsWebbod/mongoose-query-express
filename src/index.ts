@@ -2,6 +2,7 @@ import './declarations.js';
 import { Query, IMongooseQueryOptions } from '@ewb/mongoose-query';
 import { Request, NextFunction, Response } from 'express';
 
+export * from '@ewb/mongoose-query';
 export * from './QueryExpress.js';
 
 function queryExpress(req: Request, _res: Response, next: NextFunction) {
