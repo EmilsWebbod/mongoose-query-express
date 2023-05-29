@@ -6,15 +6,17 @@ export * from './QueryExpress.js';
 
 import { QueryExpress } from './QueryExpress.js';
 
-export function initQueryExpress() {
-  return (req: Request, _res: Response, next: NextFunction) => {
-    req.ewb = {
-      ...req.ewb,
-      query: new Query(req.query as IMongooseQueryOptions),
-      queryOptions: {},
-    };
-    next();
+export function initQueryExpress(
+  req: Request,
+  _res: Response,
+  next: NextFunction
+) {
+  req.ewb = {
+    ...req.ewb,
+    query: new Query(req.query as IMongooseQueryOptions),
+    queryOptions: {},
   };
+  next();
 }
 
 export default QueryExpress;

@@ -141,7 +141,6 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
   private async _search(req: R, res: Response) {
     this.init(req);
     this.query(req).removeQuery('as');
-    // @ts-ignore
     const data = await this.handler.search(this.query(req));
     res.setHeader('Link', this.pageLinkHeader(req, data));
     res.setHeader('X-Total-Count', data.count);
