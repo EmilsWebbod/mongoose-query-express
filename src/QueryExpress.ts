@@ -1,4 +1,4 @@
-import { Query, QueryError, QueryHandler } from '@ewb/mongoose-query';
+import { Query, QueryError, QueryModel } from '@ewb/mongoose-query';
 import { NextFunction, Request, Response } from 'express';
 import httpStatus from 'http-status';
 import mongoose from 'mongoose';
@@ -32,7 +32,7 @@ interface BulkProps {
 export class QueryExpress<R extends Request, T extends mongoose.Document> {
   constructor(
     private param: keyof R,
-    private handler: QueryHandler<T>,
+    private handler: QueryModel<T>,
     readonly options: IQueryExpressHandlerOptions<T> = {}
   ) {
     this.post = this.post.bind(this);

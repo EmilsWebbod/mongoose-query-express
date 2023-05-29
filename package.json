@@ -17,7 +17,7 @@
     "preversion": "yarn build"
   },
   "dependencies": {
-    "@ewb/mongoose-query": "^1.0.3",
+    "@ewb/mongoose-query": "^1.0.4",
     "http-status": "^1.6.2"
   },
   "devDependencies": {

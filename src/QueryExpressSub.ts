@@ -1,4 +1,4 @@
-import { QueryError, QueryHandler } from '@ewb/mongoose-query';
+import { QueryError, QueryModel } from '@ewb/mongoose-query';
 import { NextFunction, Request, Response } from 'express';
 import httpStatus from 'http-status';
 import mongoose from 'mongoose';
@@ -11,7 +11,7 @@ export class QueryExpressSub<
   K extends keyof T
 > {
   constructor(
-    private handler: QueryHandler<T>,
+    private handler: QueryModel<T>,
     private express: QueryExpress<R, T>,
     private reqKey: keyof R,
     private param: K
