@@ -18,9 +18,7 @@
   },
   "dependencies": {
     "@ewb/mongoose-query": "^1.0.3",
-    "express-mongo-sanitize": "^2.2.0",
-    "http-status": "^1.6.2",
-    "jsondiffpatch": "^0.4.1"
+    "http-status": "^1.6.2"
   },
   "devDependencies": {
     "@types/express": "^4.17.17",
