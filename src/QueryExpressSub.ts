@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from 'express';
 import httpStatus from 'http-status';
 import mongoose from 'mongoose';
 import { QueryExpress } from './QueryExpress.js';
-import { pageLinkHeader } from './utils';
+import { pageLinkHeader } from './utils.js';
 
 export class QueryExpressSub<
   R extends Request,

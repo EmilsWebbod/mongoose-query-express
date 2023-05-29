@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from 'express';
 import httpStatus from 'http-status';
 import mongoose from 'mongoose';
 import { QueryExpressSub } from './QueryExpressSub.js';
-import { pageLinkHeader } from './utils';
+import { pageLinkHeader } from './utils.js';
 
 export interface IQueryExpressOptions {
   skipHandlerAction?:

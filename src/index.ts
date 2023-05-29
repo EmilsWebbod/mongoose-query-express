@@ -1,4 +1,4 @@
-import './declarations';
+import './declarations.js';
 import { Query, IMongooseQueryOptions } from '@ewb/mongoose-query';
 import { Request, NextFunction, Response } from 'express';
 

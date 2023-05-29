@@ -22,6 +22,3 @@ user.post('/', userQuery.post);
 user.patch('/:id', userQuery.patch);
 user.delete('/:id', userQuery.delete); // Can also use userQuery.archive if archive option set.
 ```
-
-// This is used to set some logic for query to that model. Model for query is set in the controllers.
-
