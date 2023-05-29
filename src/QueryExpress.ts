@@ -65,15 +65,15 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   public async post(req: R, res: Response, next: NextFunction) {
     try {
-      if (req.mongooseHandlerOptions.skipHandlerAction === 'post') {
+      if (req.ewb.queryOptions.skipHandlerAction === 'post') {
         return next();
       }
       this.validateBody(req);
       this.init(req);
-      if (req.mongoosePostBody) {
+      if (req.ewb.queryPostBody) {
         // tslint:disable-next-line:forin
-        for (const key in req.mongoosePostBody) {
-          req.body[key] = req.mongoosePostBody[key];
+        for (const key in req.ewb.queryPostBody) {
+          req.body[key] = req.ewb.queryPostBody[key];
         }
       }
       req[this.param] = (await this.handler.create(req.body)) as any;
@@ -87,7 +87,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   public async findOne(req: R, _res: Response, next: NextFunction) {
     try {
-      if (req.mongooseHandlerOptions.skipHandlerAction === 'findOne') {
+      if (req.ewb.queryOptions.skipHandlerAction === 'findOne') {
         return next();
       }
       this.init(req);
@@ -112,7 +112,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   public async search(req: R, res: Response, next: NextFunction) {
     try {
-      if (req.mongooseHandlerOptions.skipHandlerAction === 'search') {
+      if (req.ewb.queryOptions.skipHandlerAction === 'search') {
         return next();
       }
       const data = await this._search(req, res);
@@ -128,10 +128,10 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   public async searchNext(req: R, res: Response, next: NextFunction) {
     try {
-      if (req.mongooseHandlerOptions.skipHandlerAction === 'search') {
+      if (req.ewb.queryOptions.skipHandlerAction === 'search') {
         return next();
       }
-      req.mongooseSearchJson = await this._search(req, res);
+      req.ewb.querySearchJson = await this._search(req, res);
       next();
     } catch (e) {
       next(QueryError.catch(e));
@@ -150,7 +150,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   public async export(req: R, res: Response, next: NextFunction) {
     try {
-      if (req.mongooseHandlerOptions.skipHandlerAction === 'export') {
+      if (req.ewb.queryOptions.skipHandlerAction === 'export') {
         return next();
       }
       this.init(req);
@@ -159,7 +159,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
       res.setHeader('Link', this.pageLinkHeader(req, paginate));
       res.setHeader('X-Total-Count', paginate.count);
 
-      req.mongooseExportJson = paginate.data;
+      req.ewb.queryExportJson = paginate.data;
       next();
     } catch (e) {
       next(QueryError.catch(e));
@@ -168,7 +168,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   public async patch(req: R, _res: Response, next: NextFunction) {
     try {
-      if (req.mongooseHandlerOptions.skipHandlerAction === 'patch') {
+      if (req.ewb.queryOptions.skipHandlerAction === 'patch') {
         return next();
       }
       this.validateReq(req);
@@ -191,7 +191,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   public async archive(req: R, _res: Response, next: NextFunction) {
     try {
-      if (req.mongooseHandlerOptions.skipHandlerAction === 'archive') {
+      if (req.ewb.queryOptions.skipHandlerAction === 'archive') {
         return next();
       }
       this.validateReq(req);
@@ -212,7 +212,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   public async delete(req: R, _res: Response, next: NextFunction) {
     try {
-      if (req.mongooseHandlerOptions.skipHandlerAction === 'delete') {
+      if (req.ewb.queryOptions.skipHandlerAction === 'delete') {
         return next();
       }
       this.validateReq(req);
@@ -317,11 +317,11 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
     try {
       this.validateReq(req);
       this.init(req);
-      if (!req.mongoosePostBody) {
-        req.mongoosePostBody = {};
+      if (!req.ewb.queryPostBody) {
+        req.ewb.queryPostBody = {};
       }
       const doc = this.getDoc(req);
-      req.mongoosePostBody[this.param as string] = doc._id;
+      req.ewb.queryPostBody[this.param as string] = doc._id;
       this.query(req).addRoot({
         [this.param]: doc._id,
       } as mongoose.FilterQuery<T>);
@@ -384,10 +384,10 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
   public addToPost(req: R, _res: Response, next: NextFunction) {
     try {
       this.validateReq(req);
-      if (!req.mongoosePostBody) {
-        req.mongoosePostBody = {};
+      if (!req.ewb.queryPostBody) {
+        req.ewb.queryPostBody = {};
       }
-      req.mongoosePostBody[this.param as string] = this.getDoc(req)._id;
+      req.ewb.queryPostBody[this.param as string] = this.getDoc(req)._id;
       next();
     } catch (e) {
       next(QueryError.catch(e));
@@ -407,23 +407,23 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
   }
 
   public preHistory(req: R) {
-    if (this.options.history?.active && req.mongooseHistory) {
+    if (this.options.history?.active && req.ewb.queryHistory) {
       if (this.options.history.ignoreFields) {
-        req.mongooseHistory.setIgnoreFields(this.options.history.ignoreFields);
+        req.ewb.queryHistory.setIgnoreFields(this.options.history.ignoreFields);
       }
-      req.mongooseHistory.setModel(this.handler.model);
-      req.mongooseHistory.setOldDoc(this.getDoc(req).toObject());
+      req.ewb.queryHistory.setModel(this.handler.model);
+      req.ewb.queryHistory.setOldDoc(this.getDoc(req).toObject());
     }
   }
 
   public async postHistory(req: R, fetchNew?: boolean) {
-    if (this.options.history?.active && req.mongooseHistory) {
+    if (this.options.history?.active && req.ewb.queryHistory) {
       let doc = this.getDoc(req);
       if (fetchNew) {
-        doc = await req.mongooseHistory.findUpdated();
+        doc = await req.ewb.queryHistory.findUpdated();
       }
-      req.mongooseHistory.setUpdatedDoc(doc);
-      req.mongooseHistory.setDiff(doc._id).then();
+      req.ewb.queryHistory.setUpdatedDoc(doc);
+      req.ewb.queryHistory.setDiff(doc._id).then();
     }
   }
 
@@ -436,14 +436,14 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
     if (this.options.queryKey in req) {
       return req[this.options.queryKey] as Query<T>;
     }
-    if (!req.mongooseQuery) {
+    if (!req.ewb.query) {
       throw new QueryError(httpStatus.INTERNAL_SERVER_ERROR, 'Query not init', {
-        detail: `mongooseQuery missing or queryKey option missing in QueryExpress ${String(
+        detail: `ewb.query missing or queryKey option missing in QueryExpress ${String(
           this.param
         )}`,
       });
     }
-    return req.mongooseQuery;
+    return req.ewb.query;
   }
 
   public pageLinkHeader(req: R, data: ISearchPaginate<any>) {

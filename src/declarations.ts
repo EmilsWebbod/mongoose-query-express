@@ -7,15 +7,17 @@ declare global {
   namespace Express {
     interface Request {
       id: string;
-      mongooseQuery: Query<any>;
-      mongooseHistory?: QueryHistory<any>;
+      ewb: {
+        query: Query<any>;
+        queryHistory?: QueryHistory<any>;
+        queryOptions: IQueryExpressOptions;
 
-      mongooseHandlerOptions?: IQueryExpressOptions;
-      mongoosePostBody: {
-        [key: string]: string | mongoose.Types.ObjectId;
+        queryPostBody?: {
+          [key: string]: string | mongoose.Types.ObjectId;
+        };
+        queryExportJson?: any[];
+        querySearchJson?: ISearchPaginate<any>;
       };
-      mongooseExportJson?: any[];
-      mongooseSearchJson?: ISearchPaginate<any>;
     }
   }
 }
