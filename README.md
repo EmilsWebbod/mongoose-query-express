@@ -8,10 +8,10 @@ Used in combination with [mongoose-query](https://github.com/EmilsWebbod/mongoos
 
 ### Usage
 ```
-import { QueryModel } from 'mongoose-query';
-import { QueryExpress } from 'mongoose-query-express';
+import { QueryExpress, QueryModel, QueryOptions } from 'mongoose-query-express';
 
-const userQueryModel = new QueryModel<User>(User, { .... });
+const options = new QueryOptions({ .... });
+const userQueryModel = new QueryModel<User>(User, options);
 const userQuery = new QueryExpress('user', userQueryModel, {...});
 
 const user = express();
