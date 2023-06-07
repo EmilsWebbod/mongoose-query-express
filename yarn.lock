@@ -128,10 +128,10 @@
   resolved "https://registry.yarnpkg.com/@esbuild/win32-x64/-/win32-x64-0.17.19.tgz#8cfaf2ff603e9aabb910e9c0558c26cf32744061"
   integrity sha512-lAhycmKnVOuRYNtRtatQR1LPQf2oYCkRGkSFnseDAKPl8lu5SOsK/e1sXe5a0Pc5kHIHe6P2I/ilntNv2xf3cA==
 
-"@ewb/mongoose-query@^1.0.5":
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/@ewb/mongoose-query/-/mongoose-query-1.0.5.tgz#f31c29bc0dc97a05951d942337b9b0e66c725eae"
-  integrity sha512-nlny/WLg2exxlfpCTzDxEocS7bROPk96+8eQnvdhnXveNu6eBau02P909zDBh9SNSrbFS7puqf7qEHCHLHAeig==
+"@ewb/mongoose-query@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@ewb/mongoose-query/-/mongoose-query-1.1.0.tgz#20960f1e11c40c8192a59e7c7aa92c86c6ed9bb1"
+  integrity sha512-SmYQ9kI6t8QTLgLY9IKuUycKpTWrraw4kn+X0qdM1nSrSXRTnjZ942WX3UrpZ6Cxhy7s8zvIC9UCBdc1NfqR8A==
   dependencies:
     express-mongo-sanitize "^2.2.0"
     http-status "^1.6.2"
