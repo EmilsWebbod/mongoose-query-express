@@ -68,7 +68,6 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
       if (req.ewb.queryOptions.skipHandlerAction === 'post') {
         return next();
       }
-      this.validateBody(req);
       this.init(req);
       if (req.ewb.queryPostBody) {
         // tslint:disable-next-line:forin
@@ -171,7 +170,6 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
         return next();
       }
       this.validateReq(req);
-      this.validateBody(req);
       this.init(req);
       const query = this.query(req) as Query<T>;
       req[this.param] = (await this.handler.findOneAndUpdate(
@@ -249,7 +247,6 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
     try {
       const ids = this.validateIdsInBody(req);
       delete req.body.ids;
-      this.handler.validateBody(req.body);
       await this.handler.updateMany(this.query(req).root || {}, ids, req.body);
       this.query(req).addRoot({ _id: { $in: ids } });
       this.query(req).setSkipAndLimit(0, ids.length);
@@ -452,20 +449,6 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   private getDoc(req: R, param = this.param) {
     return req[param] as unknown as T;
-  }
-
-  private validateBody(req: R) {
-    const invalidFields = this.handler.validateBody(req.body);
-    if (invalidFields) {
-      throw new QueryError(httpStatus.BAD_REQUEST, 'Invalid body', {
-        detail:
-          'Body contained invalid keys, remove keys located in source.body to post or patch',
-        errors: invalidFields.map((x) => ({
-          message: 'Invalid field',
-          detail: x,
-        })),
-      });
-    }
   }
 
   // todo: Not sure how to check if it should select or populate with help of req
