@@ -1,6 +1,6 @@
 {
   "name": "@ewb/mongoose-query-express",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "type": "module",
   "description": "Routes and controllers for express to handle mongoose queries",
   "main": "./lib/index.js",
@@ -17,7 +17,7 @@
     "preversion": "yarn build"
   },
   "dependencies": {
-    "@ewb/mongoose-query": "^1.1.2",
+    "@ewb/mongoose-query": "*",
     "http-status": "^1.6.2"
   },
   "devDependencies": {
