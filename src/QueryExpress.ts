@@ -65,7 +65,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   public async post(req: R, res: Response, next: NextFunction) {
     try {
-      if (req.ewb.queryOptions.skipHandlerAction === 'post') {
+      if (this.skipHandlerAction(req, 'post')) {
         return next();
       }
       this.init(req);
@@ -86,7 +86,8 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   public async findOne(req: R, _res: Response, next: NextFunction) {
     try {
-      if (req.ewb.queryOptions.skipHandlerAction === 'findOne') {
+      if (this.skipHandlerAction(req, 'findOne')) {
+        req.ewb.queryOptions.skipHandlerAction = undefined;
         return next();
       }
       this.init(req);
@@ -111,7 +112,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   public async search(req: R, res: Response, next: NextFunction) {
     try {
-      if (req.ewb.queryOptions.skipHandlerAction === 'search') {
+      if (this.skipHandlerAction(req, 'search')) {
         return next();
       }
       const data = await this._search(req, res);
@@ -127,7 +128,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   public async searchNext(req: R, res: Response, next: NextFunction) {
     try {
-      if (req.ewb.queryOptions.skipHandlerAction === 'search') {
+      if (this.skipHandlerAction(req, 'search')) {
         return next();
       }
       req.ewb.querySearchJson = await this._search(req, res);
@@ -148,7 +149,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   public async export(req: R, res: Response, next: NextFunction) {
     try {
-      if (req.ewb.queryOptions.skipHandlerAction === 'export') {
+      if (this.skipHandlerAction(req, 'export')) {
         return next();
       }
       this.init(req);
@@ -166,7 +167,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   public async patch(req: R, _res: Response, next: NextFunction) {
     try {
-      if (req.ewb.queryOptions.skipHandlerAction === 'patch') {
+      if (this.skipHandlerAction(req, 'patch')) {
         return next();
       }
       this.validateReq(req);
@@ -188,7 +189,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   public async archive(req: R, _res: Response, next: NextFunction) {
     try {
-      if (req.ewb.queryOptions.skipHandlerAction === 'archive') {
+      if (this.skipHandlerAction(req, 'archive')) {
         return next();
       }
       this.validateReq(req);
@@ -209,7 +210,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   public async delete(req: R, _res: Response, next: NextFunction) {
     try {
-      if (req.ewb.queryOptions.skipHandlerAction === 'delete') {
+      if (this.skipHandlerAction(req, 'delete')) {
         return next();
       }
       this.validateReq(req);
@@ -475,5 +476,16 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
       });
     }
     return req.body.ids.map((x: string) => new mongoose.Types.ObjectId(x));
+  }
+
+  private skipHandlerAction(
+    req: R,
+    action: IQueryExpressOptions['skipHandlerAction']
+  ) {
+    if (req.ewb.queryOptions.skipHandlerAction === action) {
+      req.ewb.queryOptions.skipHandlerAction = undefined;
+      return true;
+    }
+    return false;
   }
 }

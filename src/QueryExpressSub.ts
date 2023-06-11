@@ -12,8 +12,8 @@ export class QueryExpressSub<
   constructor(
     private handler: QueryModel<T>,
     private express: QueryExpress<R, T>,
-    private reqKey: keyof R,
-    private param: K
+    private param: keyof R,
+    private subKey: K
   ) {
     this.post = this.post.bind(this);
     this.search = this.search.bind(this);
@@ -26,8 +26,8 @@ export class QueryExpressSub<
   public async post(req: R, _res: Response, next: NextFunction) {
     try {
       this.express.addRootRequest(req);
-      req[this.reqKey] = (await this.handler.subCreate(
-        this.param,
+      req[this.param] = (await this.handler.subCreate(
+        this.subKey,
         this.express.query(req),
         req.body
       ))! as any;
@@ -37,7 +37,7 @@ export class QueryExpressSub<
       await this.handler.subPopulate(
         this.express.query(req),
         this.getSubDoc(req),
-        this.param,
+        this.subKey,
         'onPost'
       );
       next();
@@ -51,7 +51,7 @@ export class QueryExpressSub<
       this.express.query(req).removeQuery('as');
       // @ts-ignore
       const results = (await this.handler.subSearch(
-        this.param,
+        this.subKey,
         this.express.query(req),
         this.express.getRootQuery(req)
       ))!;
@@ -70,8 +70,8 @@ export class QueryExpressSub<
   public async findOne(req: R, _res: Response, next: NextFunction) {
     try {
       this.express.addRootRequest(req);
-      req[this.reqKey] = (await this.handler.subFindOne(
-        this.param,
+      req[this.param] = (await this.handler.subFindOne(
+        this.subKey,
         this.express.query(req),
         this.getQuery(req)
       ))! as any;
@@ -80,7 +80,7 @@ export class QueryExpressSub<
       await this.handler.subPopulate(
         this.express.query(req),
         this.getSubDoc(req),
-        this.param,
+        this.subKey,
         'onFindOne'
       );
       next();
@@ -92,8 +92,8 @@ export class QueryExpressSub<
   public async patch(req: R, _res: Response, next: NextFunction) {
     try {
       this.express.addRootRequest(req);
-      req[this.reqKey] = (await this.handler.subFindOneAndUpdate(
-        this.param,
+      req[this.param] = (await this.handler.subFindOneAndUpdate(
+        this.subKey,
         this.express.query(req),
         this.getQuery(req),
         req.body
@@ -104,7 +104,7 @@ export class QueryExpressSub<
       await this.handler.subPopulate(
         this.express.query(req),
         this.getSubDoc(req),
-        this.param,
+        this.subKey,
         'onPatch'
       );
       next();
@@ -116,8 +116,8 @@ export class QueryExpressSub<
   public async delete(req: R, _res: Response, next: NextFunction) {
     try {
       this.express.addRootRequest(req);
-      req[this.reqKey] = (await this.handler.subDelete(
-        this.param,
+      req[this.param] = (await this.handler.subDelete(
+        this.subKey,
         this.express.query(req),
         this.getQuery(req)
       ))! as any;
@@ -132,29 +132,29 @@ export class QueryExpressSub<
 
   public async json(req: R, res: Response, next: NextFunction) {
     try {
-      this.validateReq(req);
-      res.json(req[this.reqKey]);
+      res.json(this.validateReq(req));
     } catch (e) {
       next(QueryError.catch(e));
     }
   }
 
   private getQuery(req: R) {
-    const param = this.express.getParam(req, this.reqKey);
+    const param = this.express.getParam(req, this.param);
     return { _id: new mongoose.Types.ObjectId(param) } as mongoose.FilterQuery<
       T[K]
     >;
   }
 
   private validateReq(req: R) {
-    if (!req[this.reqKey]) {
-      throw new QueryError(httpStatus.NOT_FOUND, String(this.param), {
-        detail: 'Param not found',
+    if (!req[this.param]) {
+      throw new QueryError(httpStatus.NOT_FOUND, 'Document not found', {
+        detail: `Param ${String(this.param)} not found`,
       });
     }
+    return req[this.param];
   }
 
   private getSubDoc(req: R) {
-    return req[this.reqKey] as unknown as T[K];
+    return req[this.param] as unknown as T[K];
   }
 }
