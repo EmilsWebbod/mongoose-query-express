@@ -425,8 +425,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
   }
 
   public init(req: R) {
-    // @ts-ignore
-    this.query(req).parameter = this.param;
+    this.query(req).model = this.param as any;
   }
 
   public query(req: R) {
