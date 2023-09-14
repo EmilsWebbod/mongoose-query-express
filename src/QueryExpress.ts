@@ -61,6 +61,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
     this.addToQuery = this.addToQuery.bind(this);
     this.addToPost = this.addToPost.bind(this);
     this.getDoc = this.getDoc.bind(this);
+    this.preHistory = this.preHistory.bind(this);
   }
 
   public async post(req: R, res: Response, next: NextFunction) {
@@ -409,7 +410,13 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
         req.ewb.queryHistory.setIgnoreFields(this.options.history.ignoreFields);
       }
       req.ewb.queryHistory.setModel(this.handler.model);
-      req.ewb.queryHistory.setOldDoc(this.getDoc(req).toObject());
+      let doc = this.getDoc(req);
+      if (doc) {
+        if ('toObject' in doc) {
+          doc = doc.toObject();
+        }
+        req.ewb.queryHistory.setOldDoc(doc);
+      }
     }
   }
 
