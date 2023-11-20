@@ -61,14 +61,14 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
     this.addToQuery = this.addToQuery.bind(this);
     this.addToPost = this.addToPost.bind(this);
     this.getDoc = this.getDoc.bind(this);
+    this.preHistory = this.preHistory.bind(this);
   }
 
   public async post(req: R, res: Response, next: NextFunction) {
     try {
-      if (req.ewb.queryOptions.skipHandlerAction === 'post') {
+      if (this.skipHandlerAction(req, 'post')) {
         return next();
       }
-      this.validateBody(req);
       this.init(req);
       if (req.ewb.queryPostBody) {
         // tslint:disable-next-line:forin
@@ -87,7 +87,8 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   public async findOne(req: R, _res: Response, next: NextFunction) {
     try {
-      if (req.ewb.queryOptions.skipHandlerAction === 'findOne') {
+      if (this.skipHandlerAction(req, 'findOne')) {
+        req.ewb.queryOptions.skipHandlerAction = undefined;
         return next();
       }
       this.init(req);
@@ -112,7 +113,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   public async search(req: R, res: Response, next: NextFunction) {
     try {
-      if (req.ewb.queryOptions.skipHandlerAction === 'search') {
+      if (this.skipHandlerAction(req, 'search')) {
         return next();
       }
       const data = await this._search(req, res);
@@ -128,7 +129,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   public async searchNext(req: R, res: Response, next: NextFunction) {
     try {
-      if (req.ewb.queryOptions.skipHandlerAction === 'search') {
+      if (this.skipHandlerAction(req, 'search')) {
         return next();
       }
       req.ewb.querySearchJson = await this._search(req, res);
@@ -149,7 +150,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   public async export(req: R, res: Response, next: NextFunction) {
     try {
-      if (req.ewb.queryOptions.skipHandlerAction === 'export') {
+      if (this.skipHandlerAction(req, 'export')) {
         return next();
       }
       this.init(req);
@@ -167,11 +168,10 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   public async patch(req: R, _res: Response, next: NextFunction) {
     try {
-      if (req.ewb.queryOptions.skipHandlerAction === 'patch') {
+      if (this.skipHandlerAction(req, 'patch')) {
         return next();
       }
       this.validateReq(req);
-      this.validateBody(req);
       this.init(req);
       const query = this.query(req) as Query<T>;
       req[this.param] = (await this.handler.findOneAndUpdate(
@@ -190,7 +190,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   public async archive(req: R, _res: Response, next: NextFunction) {
     try {
-      if (req.ewb.queryOptions.skipHandlerAction === 'archive') {
+      if (this.skipHandlerAction(req, 'archive')) {
         return next();
       }
       this.validateReq(req);
@@ -211,7 +211,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   public async delete(req: R, _res: Response, next: NextFunction) {
     try {
-      if (req.ewb.queryOptions.skipHandlerAction === 'delete') {
+      if (this.skipHandlerAction(req, 'delete')) {
         return next();
       }
       this.validateReq(req);
@@ -249,7 +249,6 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
     try {
       const ids = this.validateIdsInBody(req);
       delete req.body.ids;
-      this.handler.validateBody(req.body);
       this.init(req);
       await this.handler.updateMany(this.query(req).root || {}, ids, req.body);
       this.query(req).addRoot({ _id: { $in: ids } });
@@ -414,7 +413,13 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
         req.ewb.queryHistory.setIgnoreFields(this.options.history.ignoreFields);
       }
       req.ewb.queryHistory.setModel(this.handler.model);
-      req.ewb.queryHistory.setOldDoc(this.getDoc(req).toObject());
+      let doc = this.getDoc(req);
+      if (doc) {
+        if ('toObject' in doc) {
+          doc = doc.toObject();
+        }
+        req.ewb.queryHistory.setOldDoc(doc);
+      }
     }
   }
 
@@ -430,8 +435,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
   }
 
   public init(req: R) {
-    // @ts-ignore
-    this.query(req).parameter = this.param;
+    this.query(req).model = this.param as any;
   }
 
   public query(req: R) {
@@ -455,20 +459,6 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
 
   private getDoc(req: R, param = this.param) {
     return req[param] as unknown as T;
-  }
-
-  private validateBody(req: R) {
-    const invalidFields = this.handler.validateBody(req.body);
-    if (invalidFields) {
-      throw new QueryError(httpStatus.BAD_REQUEST, 'Invalid body', {
-        detail:
-          'Body contained invalid keys, remove keys located in source.body to post or patch',
-        errors: invalidFields.map((x) => ({
-          message: 'Invalid field',
-          detail: x,
-        })),
-      });
-    }
   }
 
   // todo: Not sure how to check if it should select or populate with help of req
@@ -495,5 +485,16 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
       });
     }
     return req.body.ids.map((x: string) => new mongoose.Types.ObjectId(x));
+  }
+
+  private skipHandlerAction(
+    req: R,
+    action: IQueryExpressOptions['skipHandlerAction']
+  ) {
+    if (req.ewb.queryOptions.skipHandlerAction === action) {
+      req.ewb.queryOptions.skipHandlerAction = undefined;
+      return true;
+    }
+    return false;
   }
 }
