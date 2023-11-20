@@ -1,6 +1,6 @@
 {
   "name": "@ewb/mongoose-query-express",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "type": "module",
   "description": "Routes and controllers for express to handle mongoose queries",
   "main": "./lib/index.js",
