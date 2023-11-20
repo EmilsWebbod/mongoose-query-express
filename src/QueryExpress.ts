@@ -250,6 +250,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
       const ids = this.validateIdsInBody(req);
       delete req.body.ids;
       this.handler.validateBody(req.body);
+      this.init(req);
       await this.handler.updateMany(this.query(req).root || {}, ids, req.body);
       this.query(req).addRoot({ _id: { $in: ids } });
       this.query(req).setSkipAndLimit(0, ids.length);
@@ -264,6 +265,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
     return async (req: R, res: Response, next: NextFunction) => {
       try {
         const ids = this.validateIdsInBody(req);
+        this.init(req);
         const deleted = await this.handler.deleteMany(
           this.query(req).root || {},
           ids
@@ -282,6 +284,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document> {
     return async (req: R, res: Response, next: NextFunction) => {
       try {
         const ids = this.validateIdsInBody(req);
+        this.init(req);
         // @ts-ignore
         await this.handler.updateMany(this.query(req).root || {}, ids, {
           [this.options.archiveKey]: true,
