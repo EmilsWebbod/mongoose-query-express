@@ -38,7 +38,7 @@ interface BulkProps {
   runNext?: boolean;
 }
 
-export class QueryExpress<R extends Request, T extends mongoose.Document> {
+export class QueryExpress<R extends Request, T extends mongoose.Document<mongoose.Types.ObjectId>> {
   constructor(
     private param: keyof R,
     private handler: QueryModel<T>,

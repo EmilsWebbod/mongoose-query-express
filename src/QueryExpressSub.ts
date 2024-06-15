@@ -6,7 +6,7 @@ import { QueryExpress } from './QueryExpress.js';
 
 export class QueryExpressSub<
   R extends Request,
-  T extends mongoose.Document,
+  T extends mongoose.Document<mongoose.Types.ObjectId>,
   K extends keyof T
 > {
   constructor(
