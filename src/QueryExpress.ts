@@ -77,7 +77,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document<mongoos
         }
       }
       req[this.param] = (await this.handler.create(req.body)) as any;
-      await this.handler.populate(this.query(req), this.getDoc(req));
+      await this.handler.populate(this.query(req), this.getDoc(req), 'onPost');
       res.status(201);
       next();
     } catch (e) {
