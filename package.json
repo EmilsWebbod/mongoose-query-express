@@ -1,6 +1,6 @@
 {
   "name": "@ewb/mongoose-query-express",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "type": "module",
   "description": "Routes and controllers for express to handle mongoose queries",
   "main": "./lib/index.js",
@@ -58,5 +58,6 @@
       "pre-commit": "pretty-quick --staged"
     }
   },
-  "resolutions": {}
+  "resolutions": {},
+  "packageManager": "yarn@1.22.19+sha1.4ba7fc5c6e704fce2066ecbfb0b0d8976fe62447"
 }
