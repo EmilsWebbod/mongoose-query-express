@@ -472,7 +472,7 @@ export class QueryExpress<R extends Request, T extends mongoose.Document<mongoos
 
   private validateReq(req: R) {
     if (!req[this.param]) {
-      throw new QueryError(httpStatus.BAD_REQUEST, String(this.param), {
+      throw new QueryError(httpStatus.NOT_FOUND, String(this.param), {
         detail: 'Param is not valid',
       });
     }
